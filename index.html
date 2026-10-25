@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RimbaHitung - Petualangan Matematika Satwa Nusantara</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- QR Scanner JS -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        jungle: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            15% { transform: rotate(-8deg) scale(1.05); }
+            30% { transform: rotate(8deg) scale(1.05); }
+            45% { transform: rotate(-5deg); }
+            60% { transform: rotate(5deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        .animate-wobble {
+            animation: wobble 0.6s ease-in-out;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-emerald-50 min-h-screen text-slate-800 pb-12">
+
+    <!-- MODAL INPUT NAMA -->
+    <div id="name-modal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border-4 border-emerald-400">
+            <span class="text-6xl">🦜</span>
+            <h3 class="font-bold text-xl text-emerald-900">Halo Penjelajah Cilik!</h3>
+            <p class="text-xs text-slate-500">Masukkan nama panggilanmu agar petualangan belajar matematika semakin seru!</p>
+            <input type="text" id="input-child-name" placeholder="Contoh: Budi / Siti" class="w-full px-4 py-3 rounded-2xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-600 text-center font-bold text-lg text-emerald-900">
+            <button onclick="saveChildName()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow transition text-sm">
+                Mulai Petualangan 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-jungle-700 text-white shadow-lg sticky top-0 z-40 border-b-4 border-amber-400">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">🐅</span>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight md:text-xl">RimbaHitung</h1>
+                    <p class="text-xs text-emerald-200">Matematika Satwa Nusantara</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-400 text-amber-950 font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md text-sm">
+                    <span>⭐</span>
+                    <span id="user-stars">0</span>
+                </div>
+                <div class="bg-emerald-800 text-white font-bold px-3 py-1 rounded-full text-xs md:text-sm border border-emerald-600">
+                    🔥 <span id="user-streak">1</span> Hari
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+
+        <!-- Banner Selamat Datang -->
+        <section class="bg-white rounded-3xl p-5 shadow-sm border-2 border-emerald-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-2xl border-2 border-emerald-400">
+                    🐒
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="font-bold text-lg text-emerald-950">Halo, <span id="display-child-name" class="text-emerald-700">Penjelajah</span>! 👋</h2>
+                        <button onclick="openChangeNameModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-2 py-0.5 rounded-lg border border-slate-300 transition">
+                            ✏️ Ganti Nama
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Lakukan check-in telur harian atau scan QR kartu fisikmu!</p>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="switchTab('scan')" class="flex-1 md:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-2xl text-sm transition text-center shadow">
+                    📷 Scan QR Code
+                </button>
+                <button onclick="switchTab('toko')" class="flex-1 md:flex-initial bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-4 py-2 rounded-2xl text-sm transition text-center shadow">
+                    🛍️ Toko Stiker
+                </button>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 text-xs md:text-sm font-bold text-slate-600 overflow-x-auto">
+            <button id="tab-btn-checkin" onclick="switchTab('checkin')" class="flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center bg-jungle-700 text-white shadow-sm">
+                🥚 Kehadiran
+            </button>
+            <button id="tab-btn-scan" onclick="switchTab('scan')" class="flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center hover:bg-slate-100">
+                📷 Scan QR
+            </button>
+            <button id="tab-btn-soal" onclick="switchTab('soal')" class="flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center hover:bg-slate-100">
+                🧩 Soal Kuis
+            </button>
+            <button id="tab-btn-video" onclick="switchTab('video')" class="flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center hover:bg-slate-100">
+                🎥 Video Tutorial
+            </button>
+            <button id="tab-btn-toko" onclick="switchTab('toko')" class="flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center hover:bg-slate-100">
+                🛍️ Toko Stiker
+            </button>
+        </nav>
+
+        <!-- TAB 1: KEHADIRAN -->
+        <section id="tab-checkin" class="tab-content bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 space-y-6">
+            <div class="text-center space-y-1">
+                <h3 class="font-bold text-xl text-emerald-900">Check-in Telur Cenderawasih 🪺</h3>
+                <p class="text-xs text-slate-500">Ketuk telur 5 kali hari ini untuk retakkan, menetas, dan klaim 20 Bintang ⭐!</p>
+            </div>
+            <div class="bg-gradient-to-b from-sky-100 to-emerald-100 rounded-3xl p-6 border-2 border-sky-200 text-center space-y-4">
+                <div class="relative inline-block my-2">
+                    <div id="egg-element" onclick="tapEgg()" class="text-8xl cursor-pointer select-none transition transform hover:scale-105 active:scale-95 inline-block p-4">
+                        🥚
+                    </div>
+                    <div class="mt-2 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow text-xs font-bold text-emerald-900 border border-emerald-200">
+                        Progress Ketukan: <span id="egg-tap-count">0</span> / 5
+                    </div>
+                </div>
+                <div>
+                    <button id="btn-claim-egg" onclick="claimDailyReward()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-6 py-2.5 rounded-2xl shadow transition text-sm hidden">
+                        🎁 Klaim Hadiah 20 ⭐
+                    </button>
+                    <p id="checkin-status-msg" class="text-xs font-semibold text-emerald-700">Ketuk telur di atas untuk retakkan!</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <h4 class="font-bold text-sm text-slate-700">Kehadiran 7 Hari Ini:</h4>
+                <div class="grid grid-cols-7 gap-2 text-center" id="streak-days-container"></div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SCAN QR CODE -->
+        <section id="tab-scan" class="tab-content bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 space-y-4 hidden">
+            <div class="text-center space-y-1">
+                <h3 class="font-bold text-xl text-emerald-900">Arahkan Kamera ke QR Code Kartu Satwa 📱</h3>
+                <p class="text-xs text-slate-500">Pindai QR code pada kartu fisik untuk membuka level soal matematika bertema hewan!</p>
+            </div>
+            <div class="max-w-md mx-auto bg-slate-900 rounded-2xl overflow-hidden border-4 border-emerald-500 relative min-h-[260px]">
+                <div id="reader" class="w-full"></div>
+                <div id="scanner-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <span class="text-4xl mb-2">📸</span>
+                    <p class="text-sm font-semibold">Klik tombol di bawah untuk mengaktifkan kamera scanner</p>
+                </div>
+            </div>
+            <div class="flex justify-center gap-3">
+                <button id="btn-start-scanner" onclick="startScanner()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-2xl shadow text-sm transition">
+                    ▶️ Buka Kamera
+                </button>
+                <button id="btn-stop-scanner" onclick="stopScanner()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-6 py-2.5 rounded-2xl shadow text-sm transition hidden">
+                    ⏹️ Matikan Kamera
+                </button>
+            </div>
+
+            <!-- Uji Coba Pintasan Level -->
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center space-y-2">
+                <p class="text-xs font-semibold text-slate-400">Atau pilih contoh soal langsung per Level:</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="loadQuizById('LV1_Q1')" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-emerald-200">➕ Level 1 (Penjumlahan)</button>
+                    <button onclick="loadQuizById('LV2_Q1')" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-amber-200">➖ Level 2 (Pengurangan)</button>
+                    <button onclick="loadQuizById('LV3_Q1')" class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-sky-200">✖️ Level 3 (Perkalian)</button>
+                    <button onclick="loadQuizById('LV4_Q1')" class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-indigo-200">➗ Level 4 (Pembagian)</button>
+                    <button onclick="loadQuizById('LV5_Q1')" class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-purple-200">👑 Level 5 (Gabungan)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SOAL KUIS -->
+        <section id="tab-soal" class="tab-content bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 space-y-6 hidden">
+            <div id="no-quiz-msg" class="text-center py-12 space-y-3">
+                <span class="text-6xl">🔍</span>
+                <h3 class="font-bold text-slate-700 text-lg">Belum Ada Soal Dipilih</h3>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">Silakan scan QR Code terlebih dahulu atau pilih soal langsung dari tab Scan QR.</p>
+                <button onclick="switchTab('scan')" class="bg-emerald-600 text-white font-bold px-5 py-2 rounded-2xl text-xs shadow hover:bg-emerald-700">
+                    Buka Scanner QR
+                </button>
+            </div>
+            <div id="quiz-container" class="space-y-6 hidden">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div>
+                        <span id="quiz-level-badge" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">Level 1</span>
+                        <h3 id="quiz-title" class="font-bold text-lg text-slate-800 mt-1">Petualangan Matematika</h3>
+                    </div>
+                    <button id="btn-play-animal-sound" onclick="playCurrentAnimalSound()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1.5 rounded-2xl text-xs flex items-center gap-1.5 shadow-sm transition">
+                        <span>🔊</span>
+                        <span id="animal-sound-label">Dengar Suara Hewan</span>
+                    </button>
+                </div>
+                <div class="bg-emerald-50 rounded-2xl p-5 border border-emerald-200 space-y-3">
+                    <p id="quiz-question" class="text-slate-800 font-semibold text-base md:text-lg">Soal...</p>
+                    <div id="quiz-visual" class="text-3xl tracking-widest text-center py-3 bg-white rounded-xl border border-emerald-100 shadow-inner">
+                        🍎 + 🍎
+                    </div>
+                </div>
+                <div id="quiz-options" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+                <div id="quiz-feedback" class="hidden p-4 rounded-2xl text-center space-y-2">
+                    <p id="feedback-text" class="font-bold text-base"></p>
+                    <p id="feedback-explanation" class="text-xs text-slate-600"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: VIDEO TUTORIAL SEMPOA -->
+        <section id="tab-video" class="tab-content bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 space-y-4 hidden">
+            <div class="text-center space-y-1">
+                <h3 class="font-bold text-xl text-emerald-900">Video Belajar Sempoa 🧮</h3>
+                <p class="text-xs text-slate-500">Pilih materi video tutorial sempoa di bawah ini untuk memudahkan cara berhitungmu!</p>
+            </div>
+
+            <!-- Tombol Pilih Kategori Video Sempoa -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button onclick="changeTutorial('tambah')" id="btn-vid-tambah" class="bg-emerald-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition">
+                    ➕ Sempoa Tambah
+                </button>
+                <button onclick="changeTutorial('kurang')" id="btn-vid-kurang" class="bg-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs shadow transition hover:bg-slate-200">
+                    ➖ Sempoa Kurang
+                </button>
+                <button onclick="changeTutorial('kali')" id="btn-vid-kali" class="bg-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs shadow transition hover:bg-slate-200">
+                    ✖️ Sempoa Kali
+                </button>
+                <button onclick="changeTutorial('bagi')" id="btn-vid-bagi" class="bg-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs shadow transition hover:bg-slate-200">
+                    ➗ Sempoa Bagi
+                </button>
+            </div>
+
+            <div class="max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-lg border-4 border-amber-300 bg-slate-900 aspect-video relative flex items-center justify-center text-white">
+                <iframe id="tutorial-iframe" class="w-full h-full" src="https://www.youtube-nocookie.com/embed/36Xj43mZg1w" title="Video Tutorial Sempoa" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <!-- TAB 5: TOKO STIKER -->
+        <section id="tab-toko" class="tab-content bg-white rounded-3xl p-6 shadow-sm border-2 border-emerald-100 space-y-6 hidden">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-xl text-emerald-900">Toko Stiker Fauna 🛍️</h3>
+                    <p class="text-xs text-slate-500">Kumpulkan stiker hewan langka Indonesia!</p>
+                </div>
+                <div class="bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full text-xs">
+                    Koleksi: <span id="unlocked-count">0</span> / 6
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="sticker-grid"></div>
+        </section>
+
+    </main>
+
+    <!-- Script Logic & BANK SOAL LENGKAP -->
+    <script>
+        const BANK_SOAL = [
+            // ================= LEVEL 1: PENJUMLAHAN (10 SOAL) =================
+            { qr_code_id: "LV1_Q1", level: 1, judul: "Cenderawasih Emas Papua 🦜", animal: "cenderawasih", soal: "Burung Cenderawasih menemukan 3 buah merah di pagi hari. Sore harinya menemukan 2 buah lagi. Berapa total buah yang ditemukan?", visual: "🍒🍒🍒 + 🍒🍒", pilihan: [{ id: "A", teks: "4 Buah" }, { id: "B", teks: "5 Buah" }, { id: "C", teks: "6 Buah" }], jawaban_benar: "B", penjelasan: "3 + 2 = 5 Buah!", bintang: 10 },
+            { qr_code_id: "LV1_Q2", level: 1, judul: "Kakatua Jambul Kuning 🦜", animal: "cenderawasih", soal: "Ada 4 burung Kakatua hinggap di pohon. Datang lagi 3 burung Kakatua bergabung. Berapa jumlah burung Kakatua semuanya?", visual: "🦜🦜🦜🦜 + 🦜🦜🦜", pilihan: [{ id: "A", teks: "6 Burung" }, { id: "B", teks: "7 Burung" }, { id: "C", teks: "8 Burung" }], jawaban_benar: "B", penjelasan: "4 + 3 = 7 Burung!", bintang: 10 },
+            { qr_code_id: "LV1_Q3", level: 1, judul: "Kancil Cerdik & Mentimun 🦌", animal: "tarsius", soal: "Si Kancil memetik 5 buah mentimun, lalu memetik 2 buah mentimun lagi. Berapa total mentimun Kancil?", visual: "🥒🥒🥒🥒🥒 + 🥒🥒", pilihan: [{ id: "A", teks: "6 Mentimun" }, { id: "B", teks: "7 Mentimun" }, { id: "C", teks: "8 Mentimun" }], jawaban_benar: "B", penjelasan: "5 + 2 = 7 Mentimun!", bintang: 10 },
+            { qr_code_id: "LV1_Q4", level: 1, judul: "Penyu Hijau Pantai 🐢", animal: "komodo", soal: "Ada 3 anak Penyu merayap di pasir. Datang menyusul 4 anak Penyu lainnya. Berapa jumlah anak Penyu?", visual: "🐢🐢🐢 + 🐢🐢🐢🐢", pilihan: [{ id: "A", teks: "6 Penyu" }, { id: "B", teks: "7 Penyu" }, { id: "C", teks: "8 Penyu" }], jawaban_benar: "B", penjelasan: "3 + 4 = 7 Penyu!", bintang: 10 },
+            { qr_code_id: "LV1_Q5", level: 1, judul: "Orangutan Borneo 🦧", animal: "tarsius", soal: "Orangutan memegang 6 pisang di tangan kiri dan 3 pisang di tangan kanan. Berapa total pisangnya?", visual: "🍌🍌🍌🍌🍌🍌 + 🍌🍌🍌", pilihan: [{ id: "A", teks: "8 Pisang" }, { id: "B", teks: "9 Pisang" }, { id: "C", teks: "10 Pisang" }], jawaban_benar: "B", penjelasan: "6 + 3 = 9 Pisang!", bintang: 10 },
+            { qr_code_id: "LV1_Q6", level: 1, judul: "Bekantan Lucu 🐒", animal: "tarsius", soal: "Ada 5 monyet Bekantan di dahan bawah dan 4 monyet di dahan atas pohon. Berapa jumlah monyet seluruhnya?", visual: "🐒🐒🐒🐒🐒 + 🐒🐒🐒🐒", pilihan: [{ id: "A", teks: "8 Monyet" }, { id: "B", teks: "9 Monyet" }, { id: "C", teks: "10 Monyet" }], jawaban_benar: "B", penjelasan: "5 + 4 = 9 Monyet!", bintang: 10 },
+            { qr_code_id: "LV1_Q7", level: 1, judul: "Jalak Bali Anggun 🐦", animal: "cenderawasih", soal: "Sebanyak 2 ekor Jalak Bali bernyanyi, lalu datang 5 ekor lagi ikut bernyanyi. Berapa jumlah burung yang bernyanyi?", visual: "🐦🐦 + 🐦🐦🐦🐦🐦", pilihan: [{ id: "A", teks: "6 Burung" }, { id: "B", teks: "7 Burung" }, { id: "C", teks: "8 Burung" }], jawaban_benar: "B", penjelasan: "2 + 5 = 7 Burung!", bintang: 10 },
+            { qr_code_id: "LV1_Q8", level: 1, judul: "Rusa Timor 🦌", animal: "tarsius", soal: "Ada 4 ekor Rusa sedang makan rumput, lalu bergabung 4 ekor Rusa lainnya. Berapa jumlah Rusa?", visual: "🦌🦌🦌🦌 + 🦌🦌🦌🦌", pilihan: [{ id: "A", teks: "7 Rusa" }, { id: "B", teks: "8 Rusa" }, { id: "C", teks: "9 Rusa" }], jawaban_benar: "B", penjelasan: "4 + 4 = 8 Rusa!", bintang: 10 },
+            { qr_code_id: "LV1_Q9", level: 1, judul: "Badak Jawa 🦏", animal: "gajah", soal: "Badak menemukan 7 kubangan lumpur baru di pagi hari dan 2 kubangan di sore hari. Berapa total kubangan?", visual: "🌊(7) + 🌊(2)", pilihan: [{ id: "A", teks: "8 Kubangan" }, { id: "B", teks: "9 Kubangan" }, { id: "C", teks: "10 Kubangan" }], jawaban_benar: "B", penjelasan: "7 + 2 = 9 Kubangan!", bintang: 10 },
+            { qr_code_id: "LV1_Q10", level: 1, judul: "Maleo Sulawesi 🐣", animal: "cenderawasih", soal: "Induk Maleo merawat 5 telur di pasir hangat dan 5 telur di dekat pohon. Berapa total telur Maleo?", visual: "🥚🥚🥚🥚🥚 + 🥚🥚🥚🥚🥚", pilihan: [{ id: "A", teks: "9 Telur" }, { id: "B", teks: "10 Telur" }, { id: "C", teks: "11 Telur" }], jawaban_benar: "B", penjelasan: "5 + 5 = 10 Telur!", bintang: 10 },
+
+            // ================= LEVEL 2: PENGURANGAN (10 SOAL) =================
+            { qr_code_id: "LV2_Q1", level: 2, judul: "Tarsius Lucu Sulawesi 🐒", animal: "tarsius", soal: "Tarsius membawa 5 buah jangkrik kecil. Kawan Tarsius memakan 2 jangkrik. Berapa jangkrik yang tersisa?", visual: "🦗🦗🦗🦗🦗 - 🦗🦗", pilihan: [{ id: "A", teks: "3 Jangkrik" }, { id: "B", teks: "2 Jangkrik" }, { id: "C", teks: "4 Jangkrik" }], jawaban_benar: "A", penjelasan: "5 - 2 = 3 Jangkrik!", bintang: 15 },
+            { qr_code_id: "LV2_Q2", level: 2, judul: "Harimau Sumatra Rimba 🐅", animal: "harimau", soal: "Ibu Harimau menangkap 10 ikan. 4 ikan diberikan pada anaknya. Berapa sisa ikan Ibu Harimau?", visual: "🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟 - 🐟🐟🐟🐟", pilihan: [{ id: "A", teks: "5 Ikan" }, { id: "B", teks: "6 Ikan" }, { id: "C", teks: "7 Ikan" }], jawaban_benar: "B", penjelasan: "10 - 4 = 6 Ikan!", bintang: 15 },
+            { qr_code_id: "LV2_Q3", level: 2, judul: "Gajah Sumatra Bijak 🐘", animal: "gajah", soal: "Gajah membawa 8 tebu segar. 3 tebu diberikan ke anak gajah. Berapa sisa tebu gajah besar?", visual: "🎋🎋🎋🎋🎋🎋🎋🎋 - 🎋🎋🎋", pilihan: [{ id: "A", teks: "4 Tebu" }, { id: "B", teks: "5 Tebu" }, { id: "C", teks: "6 Tebu" }], jawaban_benar: "B", penjelasan: "8 - 3 = 5 Tebu!", bintang: 15 },
+            { qr_code_id: "LV2_Q4", level: 2, judul: "Elang Jawa Perkasa 🦅", animal: "cenderawasih", soal: "Elang punya 9 ranting di sarangnya, lalu 3 ranting jatuh tertiup angin. Berapa sisa ranting?", visual: "🪵(9) - 🪵(3)", pilihan: [{ id: "A", teks: "5 Ranting" }, { id: "B", teks: "6 Ranting" }, { id: "C", teks: "7 Ranting" }], jawaban_benar: "B", penjelasan: "9 - 3 = 6 Ranting!", bintang: 15 },
+            { qr_code_id: "LV2_Q5", level: 2, judul: "Kancil & Buah Rambutan 🦌", animal: "tarsius", soal: "Kancil memetik 7 buah rambutan, lalu dimakan 2 buah. Berapa sisa buah Kancil?", visual: "🔴🔴🔴🔴🔴🔴🔴 - 🔴🔴", pilihan: [{ id: "A", teks: "4 Rambutan" }, { id: "B", teks: "5 Rambutan" }, { id: "C", teks: "6 Rambutan" }], jawaban_benar: "B", penjelasan: "7 - 2 = 5 Rambutan!", bintang: 15 },
+            { qr_code_id: "LV2_Q6", level: 2, judul: "Beruang Madu Sumatra 🐻", animal: "harimau", soal: "Beruang mengumpulkan 6 sarang madu, lalu dimakan 3 sarang. Berapa sisa madu Beruang?", swift: "", visual: "🍯🍯🍯🍯🍯🍯 - 🍯🍯🍯", pilihan: [{ id: "A", teks: "2 Madu" }, { id: "B", teks: "3 Madu" }, { id: "C", teks: "4 Madu" }], jawaban_benar: "B", penjelasan: "6 - 3 = 3 Sarang Madu!", bintang: 15 },
+            { qr_code_id: "LV2_Q7", level: 2, judul: "Pesut Mahakam 🐬", animal: "komodo", soal: "Ada 8 ikan lompat di sungai, 5 ikan menyelam kembali ke dalam air. Berapa ikan yang masih terlihat?", visual: "🐟(8) - 🐟(5)", pilihan: [{ id: "A", teks: "2 Ikan" }, { id: "B", teks: "3 Ikan" }, { id: "C", teks: "4 Ikan" }], jawaban_benar: "B", penjelasan: "8 - 5 = 3 Ikan!", bintang: 15 },
+            { qr_code_id: "LV2_Q8", level: 2, judul: "Kucing Merah Kalimantan 🐱", animal: "harimau", soal: "Kucing hutan menangkap 10 tikus kecil, lalu 7 tikus berhasil kabur. Berapa sisa tikus?", visual: "🐁(10) - 🐁(7)", pilihan: [{ id: "A", teks: "2 Tikus" }, { id: "B", teks: "3 Tikus" }, { id: "C", teks: "4 Tikus" }], jawaban_benar: "B", penjelasan: "10 - 7 = 3 Tikus!", bintang: 15 },
+            { qr_code_id: "LV2_Q9", level: 2, judul: "Kasuari Papua 🦃", animal: "cenderawasih", soal: "Kasuari mengumpulkan 6 buah hutan, lalu diberikan ke temannya 4 buah. Berapa sisa buah Kasuari?", visual: "🍎(6) - 🍎(4)", pilihan: [{ id: "A", teks: "1 Buah" }, { id: "B", teks: "2 Buah" }, { id: "C", teks: "3 Buah" }], jawaban_benar: "B", penjelasan: "6 - 4 = 2 Buah!", bintang: 15 },
+            { qr_code_id: "LV2_Q10", level: 2, judul: "Komodo Pulau Rinca 🦎", animal: "komodo", soal: "Ada 9 ekor Komodo beristirahat, lalu 5 ekor berjalan masuk ke dalam hutan. Berapa Komodo yang masih ada?", visual: "🦎(9) - 🦎(5)", pilihan: [{ id: "A", teks: "3 Komodo" }, { id: "B", teks: "4 Komodo" }, { id: "C", teks: "5 Komodo" }], jawaban_benar: "B", penjelasan: "9 - 5 = 4 Komodo!", bintang: 15 },
+
+            // ================= LEVEL 3: PERKALIAN (10 SOAL) =================
+            { qr_code_id: "LV3_Q1", level: 3, judul: "Gajah Sumatra Cerdas 🐘", animal: "gajah", soal: "Gajah memetik 3 keranjang pisang. Setiap keranjang berisi 3 sisir pisang. Berapa total sisir pisang?", visual: "🧺(3) x 🧺(3)", pilihan: [{ id: "A", teks: "6 Pisang" }, { id: "B", teks: "9 Pisang" }, { id: "C", teks: "12 Pisang" }], jawaban_benar: "B", penjelasan: "3 x 3 = 9 Sisir Pisang!", bintang: 20 },
+            { qr_code_id: "LV3_Q2", level: 3, judul: "Kakatua Raja Papua 🦜", animal: "cenderawasih", soal: "Ada 2 kelompok burung Kakatua. Setiap kelompok berisi 4 burung. Berapa total burung Kakatua?", visual: "🦜(4) x 🦜(2)", pilihan: [{ id: "A", teks: "6 Burung" }, { id: "B", teks: "8 Burung" }, { id: "C", teks: "10 Burung" }], jawaban_benar: "B", penjelasan: "2 x 4 = 8 Burung!", bintang: 20 },
+            { qr_code_id: "LV3_Q3", level: 3, judul: "Orangutan Cerdas 🦧", animal: "tarsius", soal: "Orangutan membawa 4 ikat rambutan. Tiap ikat berisi 2 buah rambutan. Berapa total buahnya?", visual: "🔴(2) x 🌿(4)", pilihan: [{ id: "A", teks: "6 Buah" }, { id: "B", teks: "8 Buah" }, { id: "C", teks: "10 Buah" }], jawaban_benar: "B", penjelasan: "4 x 2 = 8 Buah!", bintang: 20 },
+            { qr_code_id: "LV3_Q4", level: 3, judul: "Harimau Sumatra 🐅", animal: "harimau", soal: "Ada 3 sarang, setiap sarang berisi 3 anak harimau kecil. Berapa total anak harimau?", visual: "🐅(3) x 🐅(3)", pilihan: [{ id: "A", teks: "6 Ekor" }, { id: "B", teks: "9 Ekor" }, { id: "C", teks: "12 Ekor" }], jawaban_benar: "B", penjelasan: "3 x 3 = 9 Ekor!", bintang: 20 },
+            { qr_code_id: "LV3_Q5", level: 3, judul: "Komodo Rinca 🦎", animal: "komodo", soal: "Ada 5 lubang sarang telur. Tiap lubang berisi 2 butir telur komodo. Berapa total telur?", visual: "🥚(2) x 🕳️(5)", pilihan: [{ id: "A", teks: "8 Telur" }, { id: "B", teks: "10 Telur" }, { id: "C", teks: "12 Telur" }], jawaban_benar: "B", penjelasan: "5 x 2 = 10 Telur!", bintang: 20 },
+            { qr_code_id: "LV3_Q6", level: 3, judul: "Rusa Jawa 🦌", animal: "tarsius", soal: "Ada 4 kelompok Rusa, setiap kelompok ada 3 ekor Rusa. Berapa jumlah Rusa seluruhnya?", visual: "🦌(3) x 🌿(4)", pilihan: [{ id: "A", teks: "10 Rusa" }, { id: "B", teks: "12 Rusa" }, { id: "C", teks: "14 Rusa" }], jawaban_benar: "B", penjelasan: "4 x 3 = 12 Rusa!", bintang: 20 },
+            { qr_code_id: "LV3_Q7", level: 3, judul: "Jalak Bali 🐦", animal: "cenderawasih", soal: "Ada 3 tangkai pohon, masing-masing dihinggapi 4 burung Jalak Bali. Berapa total burung?", visual: "🐦(4) x 🌳(3)", pilihan: [{ id: "A", teks: "10 Burung" }, { id: "B", teks: "12 Burung" }, { id: "C", teks: "15 Burung" }], jawaban_benar: "B", penjelasan: "3 x 4 = 12 Burung!", bintang: 20 },
+            { qr_code_id: "LV3_Q8", level: 3, judul: "Kancil Cerdik 🦌", animal: "tarsius", soal: "Kancil menanam 5 baris pohon mentimun. Tiap baris ada 3 pohon. Berapa total pohon mentimun?", visual: "🥒(3) x 🌾(5)", pilihan: [{ id: "A", teks: "12 Pohon" }, { id: "B", teks: "15 Pohon" }, { id: "C", teks: "18 Pohon" }], jawaban_benar: "B", penjelasan: "5 x 3 = 15 Pohon!", bintang: 20 },
+            { qr_code_id: "LV3_Q9", level: 3, judul: "Bekantan Rimba 🐒", animal: "tarsius", soal: "Ada 2 kelompok monyet Bekantan, masing-masing berisi 5 ekor monyet. Berapa total monyet?", visual: "🐒(5) x 🌳(2)", pilihan: [{ id: "A", teks: "8 Monyet" }, { id: "B", teks: "10 Monyet" }, { id: "C", teks: "12 Monyet" }], jawaban_benar: "B", penjelasan: "2 x 5 = 10 Monyet!", bintang: 20 },
+            { qr_code_id: "LV3_Q10", level: 3, judul: "Penyu Hijau 🐢", animal: "komodo", soal: "Ada 3 sarang penyu di pantai, masing-masing berisi 4 butir telur. Berapa total telur penyu?", visual: "🐢(4) x 🏖️(3)", pilihan: [{ id: "A", teks: "10 Telur" }, { id: "B", teks: "12 Telur" }, { id: "C", teks: "14 Telur" }], jawaban_benar: "B", p: "12", jawaban_benar: "B", penjelasan: "3 x 4 = 12 Telur!", bintang: 20 },
+
+            // ================= LEVEL 4: PEMBAGIAN (10 SOAL) =================
+            { qr_code_id: "LV4_Q1", level: 4, judul: "Orangutan Dermawan 🦧", animal: "tarsius", soal: "Orangutan punya 6 buah pisang dibagikan merata kepada 2 ekor anaknya. Berapa pisang yang didapat tiap anak?", visual: "🍌(6) ÷ 🦧(2)", pilihan: [{ id: "A", teks: "2 Pisang" }, { id: "B", teks: "3 Pisang" }, { id: "C", teks: "4 Pisang" }], jawaban_benar: "B", penjelasan: "6 ÷ 2 = 3 Pisang!", bintang: 25 },
+            { qr_code_id: "LV4_Q2", level: 4, judul: "Gajah Sumatra 🐘", animal: "gajah", soal: "Gajah membagikan 8 buah tebu kepada 2 ekor temannya sama rata. Berapa tebu yang diterima tiap teman?", visual: "🎋(8) ÷ 🐘(2)", pilihan: [{ id: "A", teks: "3 Tebu" }, { id: "B", teks: "4 Tebu" }, { id: "C", teks: "5 Tebu" }], jawaban_benar: "B", penjelasan: "8 ÷ 2 = 4 Tebu!", bintang: 25 },
+            { qr_code_id: "LV4_Q3", level: 4, judul: "Harimau Sumatra 🐅", animal: "harimau", soal: "Ibu Harimau membagi 9 ikan segar kepada 3 anaknya sama rata. Berapa ikan yang didapat tiap anak?", visual: "🐟(9) ÷ 🐅(3)", pilihan: [{ id: "A", teks: "2 Ikan" }, { id: "B", teks: "3 Ikan" }, { id: "C", teks: "4 Ikan" }], jawaban_benar: "B", penjelasan: "9 ÷ 3 = 3 Ikan!", bintang: 25 },
+            { qr_code_id: "LV4_Q4", level: 4, judul: "Kancil Cerdik 🦌", animal: "tarsius", soal: "Kancil membawa 10 buah mentimun untuk dibagikan ke 2 kura-kura sama rata. Berapa mentimun tiap kura-kura?", visual: "🥒(10) ÷ 🐢(2)", pilihan: [{ id: "A", teks: "4 Mentimun" }, { id: "B", teks: "5 Mentimun" }, { id: "C", teks: "6 Mentimun" }], jawaban_benar: "B", penjelasan: "10 ÷ 2 = 5 Mentimun!", bintang: 25 },
+            { qr_code_id: "LV4_Q5", level: 4, judul: "Komodo Rinca 🦎", animal: "komodo", soal: "Ada 4 ekor Komodo membagi 12 potong daging sama rata. Berapa potongan daging yang didapat tiap Komodo?", visual: "🥩(12) ÷ 🦎(4)", pilihan: [{ id: "A", teks: "2 Potong" }, { id: "B", teks: "3 Potong" }, { id: "C", teks: "4 Potong" }], jawaban_benar: "B", penjelasan: "12 ÷ 4 = 3 Potong Daging!", bintang: 25 },
+            { qr_code_id: "LV4_Q6", level: 4, judul: "Cenderawasih Papua 🦜", animal: "cenderawasih", soal: "Ada 8 buah beri dibagikan kepada 4 burung Cenderawasih sama rata. Berapa buah yang didapat tiap burung?", visual: "🍒(8) ÷ 🦜(4)", pilihan: [{ id: "A", teks: "1 Buah" }, { id: "B", teks: "2 Buah" }, { id: "C", teks: "3 Buah" }], jawaban_benar: "B", penjelasan: "8 ÷ 4 = 2 Buah!", bintang: 25 },
+            { qr_code_id: "LV4_Q7", level: 4, judul: "Bekantan Kalimantan 🐒", animal: "tarsius", soal: "Sebanyak 10 buah mangga dibagikan kepada 5 monyet Bekantan sama rata. Berapa mangga tiap monyet?", visual: "🥭(10) ÷ 🐒(5)", pilihan: [{ id: "A", teks: "1 Mangga" }, { id: "B", teks: "2 Mangga" }, { id: "C", teks: "3 Mangga" }], jawaban_benar: "B", penjelasan: "10 ÷ 5 = 2 Mangga!", bintang: 25 },
+            { qr_code_id: "LV4_Q8", level: 4, judul: "Jalak Bali 🐦", animal: "cenderawasih", soal: "Ada 6 biji-bijian dibagikan kepada 3 burung Jalak Bali sama rata. Berapa biji yang didapat tiap burung?", visual: "🌾(6) ÷ 🐦(3)", pilihan: [{ id: "A", teks: "1 Biji" }, { id: "B", teks: "2 Biji" }, { id: "C", teks: "3 Biji" }], jawaban_benar: "B", penjelasan: "6 ÷ 3 = 2 Biji!", bintang: 25 },
+            { qr_code_id: "LV4_Q9", level: 4, judul: "Beruang Madu 🐻", animal: "harimau", soal: "Beruang membagikan 12 sarang madu kepada 3 teman hutannya sama rata. Berapa sarang madu tiap teman?", visual: "🍯(12) ÷ 🐻(3)", pilihan: [{ id: "A", teks: "3 Sarang" }, { id: "B", teks: "4 Sarang" }, { id: "C", teks: "5 Sarang" }], jawaban_benar: "B", penjelasan: "12 ÷ 3 = 4 Sarang Madu!", bintang: 25 },
+            { qr_code_id: "LV4_Q10", level: 4, judul: "Rusa Timor 🦌", animal: "tarsius", soal: "Ada 15 ikat rumput dibagikan kepada 3 ekor Rusa sama rata. Berapa ikat rumput yang diterima tiap Rusa?", visual: "🌿(15) ÷ 🦌(3)", pilihan: [{ id: "A", teks: "4 Ikat" }, { id: "B", teks: "5 Ikat" }, { id: "C", teks: "6 Ikat" }], jawaban_benar: "B", penjelasan: "15 ÷ 3 = 5 Ikat Rumput!", bintang: 25 },
+
+            // ================= LEVEL 5: GABUNGAN CAMPURAN (15 SOAL) =================
+            { qr_code_id: "LV5_Q1", level: 5, judul: "Tantangan Rimba 1 👑", animal: "gajah", soal: "Hitunglah hasil dari operasi campuran berikut: 5 + 3 x 2 = ...", visual: "5 + (3 x 2)", pilihan: [{ id: "A", teks: "16" }, { id: "B", teks: "11" }, { id: "C", teks: "10" }], jawaban_benar: "B", penjelasan: "Perkalian dikerjakan dulu (3x2=6), lalu ditambah 5 menjadi 11!", bintang: 30 },
+            { qr_code_id: "LV5_Q2", level: 5, judul: "Tantangan Rimba 2 👑", animal: "harimau", soal: "Berapakah hasil dari: 12 - 4 ÷ 2 = ...", visual: "12 - (4 ÷ 2)", pilihan: [{ id: "A", teks: "10" }, { id: "B", teks: "5" }, { id: "C", teks: "4" }], jawaban_benar: "A", penjelasan: "Pembagian dikerjakan dulu (4÷2=2), lalu 12 - 2 = 10!", bintang: 30 },
+            { qr_code_id: "LV5_Q3", level: 5, judul: "Tantangan Rimba 3 👑", animal: "cenderawasih", soal: "Ibu burung punya 10 cacing, ditambah 4 cacing, lalu dimakan anaknya 3 cacing. Sisa cacing adalah...", visual: "10 + 4 - 3", pilihan: [{ id: "A", teks: "10 Cacing" }, { id: "B", teks: "11 Cacing" }, { id: "C", teks: "12 Cacing" }], jawaban_benar: "B", penjelasan: "10 + 4 = 14, dikurangi 3 sisa 11 cacing!", bintang: 30 },
+            { qr_code_id: "LV5_Q4", level: 5, judul: "Tantangan Rimba 4 👑", animal: "tarsius", soal: "Kancil punya 3 keranjang mentimun, masing-masing isi 4 buah. Diberikan ke kura-kura 2 buah. Sisa mentimun Kancil?", visual: "(3 x 4) - 2", pilihan: [{ id: "A", teks: "10 Buah" }, { id: "B", teks: "12 Buah" }, { id: "C", teks: "14 Buah" }], jawaban_benar: "A", penjelasan: "3 x 4 = 12, dikurangi 2 sisa 10 buah mentimun!", bintang: 30 },
+            { qr_code_id: "LV5_Q5", level: 5, judul: "Tantangan Rimba 5 👑", animal: "komodo", soal: "Berapakah hasil dari operasi berikut: (8 + 2) x 2 = ...", visual: "(8 + 2) x 2", pilihan: [{ id: "A", teks: "20" }, { id: "B", teks: "18" }, { id: "C", teks: "12" }], jawaban_benar: "A", penjelasan: "Dalam kurung dikerjakan dulu (8+2=10), lalu dikali 2 menjadi 20!", bintang: 30 },
+            { qr_code_id: "LV5_Q6", level: 5, judul: "Tantangan Rimba 6 👑", animal: "gajah", soal: "Gajah membawa 20 tebu, dibagikan ke 4 temannya, lalu Gajah memetik 5 tebu lagi. Total tebu Gajah sekarang?", visual: "(20 ÷ 4) + 5", pilihan: [{ id: "A", teks: "10 Tebu" }, { id: "B", teks: "15 Tebu" }, { id: "C", teks: "25 Tebu" }], jawaban_benar: "A", penjelasan: "20 ÷ 4 = 5, ditambah 5 menjadi 10 tebu!", bintang: 30 },
+            { qr_code_id: "LV5_Q7", level: 5, judul: "Tantangan Rimba 7 👑", animal: "harimau", soal: "Berapakah hasil dari: 15 - 3 x 3 = ...", visual: "15 - (3 x 3)", pilihan: [{ id: "A", teks: "36" }, { id: "B", teks: "6" }, { id: "C", teks: "12" }], jawaban_benar: "B", penjelasan: "3 x 3 = 9, lalu 15 - 9 = 6!", bintang: 30 },
+            { qr_code_id: "LV5_Q8", level: 5, judul: "Tantangan Rimba 8 👑", animal: "cenderawasih", soal: "Berapakah hasil dari: (6 + 6) ÷ 3 = ...", visual: "(6 + 6) ÷ 3", pilihan: [{ id: "A", teks: "4" }, { id: "B", teks: "6" }, { id: "C", teks: "8" }], jawaban_benar: "A", penjelasan: "6 + 6 = 12, lalu 12 ÷ 3 = 4!", bintang: 30 },
+            { qr_code_id: "LV5_Q9", level: 5, judul: "Tantangan Rimba 9 👑", animal: "tarsius", soal: "Kancil mengumpulkan 7 buah, menemukan lagi 8 buah, lalu membaginya rata ke 3 temannya. Berapa bagian tiap teman?", visual: "(7 + 8) ÷ 3", pilihan: [{ id: "A", teks: "5 Buah" }, { id: "B", teks: "6 Buah" }, { id: "C", teks: "7 Buah" }], jawaban_benar: "A", penjelasan: "7 + 8 = 15, lalu 15 ÷ 3 = 5 buah!", bintang: 30 },
+            { qr_code_id: "LV5_Q10", level: 5, judul: "Tantangan Rimba 10 👑", animal: "komodo", soal: "Berapakah hasil dari: 4 x 4 - 5 = ...", visual: "(4 x 4) - 5", pilihan: [{ id: "A", teks: "11" }, { id: "B", teks: "12" }, { id: "C", teks: "16" }], jawaban_benar: "A", penjelasan: "4 x 4 = 16, dikurangi 5 sisa 11!", bintang: 30 },
+            { qr_code_id: "LV5_Q11", level: 5, judul: "Tantangan Rimba 11 👑", animal: "gajah", soal: "Berapakah hasil dari: 18 ÷ (3 + 3) = ...", visual: "18 ÷ (3 + 3)", pilihan: [{ id: "A", teks: "3" }, { id: "B", teks: "6" }, { id: "C", teks: "9" }], jawaban_benar: "A", penjelasan: "3 + 3 = 6, lalu 18 ÷ 6 = 3!", bintang: 30 },
+            { qr_code_id: "LV5_Q12", level: 5, judul: "Tantangan Rimba 12 👑", animal: "harimau", soal: "Harimau punya 2 kelompok ikan, tiap kelompok isi 6 ikan. Dimakan 4 ikan. Sisa ikan Harimau?", visual: "(2 x 6) - 4", pilihan: [{ id: "A", teks: "8 Ikan" }, { id: "B", teks: "10 Ikan" }, { id: "C", teks: "12 Ikan" }], jawaban_benar: "A", penjelasan: "2 x 6 = 12, dikurangi 4 sisa 8 ikan!", bintang: 30 },
+            { qr_code_id: "LV5_Q13", level: 5, judul: "Tantangan Rimba 13 👑", animal: "cenderawasih", soal: "Berapakah hasil dari: 7 + 7 + 7 - 10 = ...", visual: "7 + 7 + 7 - 10", pilihan: [{ id: "A", teks: "11" }, { id: "B", teks: "14" }, { id: "C", teks: "21" }], jawaban_benar: "A", penjelasan: "7+7+7 = 21, dikurangi 10 sisa 11!", bintang: 30 },
+            { qr_code_id: "LV5_Q14", level: 5, judul: "Tantangan Rimba 14 👑", animal: "tarsius", soal: "Berapakah hasil dari: 10 + (2 x 5) = ...", visual: "10 + (2 x 5)", pilihan: [{ id: "A", teks: "20" }, { id: "B", teks: "15" }, { id: "C", teks: "25" }], jawaban_benar: "A", penjelasan: "2 x 5 = 10, lalu 10 + 10 = 20!", bintang: 30 },
+            { qr_code_id: "LV5_Q15", level: 5, judul: "Tantangan Rimba 15 👑", animal: "komodo", soal: "Raja Komodo memiliki 30 butir telur, menetas 10 butir, sisanya dibagikan ke 4 sarang sama rata. Berapa isi tiap sarang?", visual: "(30 - 10) ÷ 4", pilihan: [{ id: "A", teks: "5 Telur" }, { id: "B", teks: "6 Telur" }, { id: "C", teks: "8 Telur" }], jawaban_benar: "A", penjelasan: "30 - 10 = 20, lalu 20 ÷ 4 = 5 butir telur!", bintang: 30 }
+        ];
+
+        const DATABASE_STIKER = [
+            { id: "stk_1", nama: "Jalak Bali", icon: "🐦", harga: 20, deskripsi: "Burung putih nan anggun dari Bali" },
+            { id: "stk_2", nama: "Orangutan", icon: "🦧", harga: 30, deskripsi: "Penjaga cerdas hutan Borneo" },
+            { id: "stk_3", nama: "Bekantan", icon: "🐒", harga: 40, deskripsi: "Monyet idung panjang yang ramah" },
+            { id: "stk_4", nama: "Anoa Sultra", icon: "🐂", harga: 50, deskripsi: "Kerbau kerdil tangguh Sulawesi" },
+            { id: "stk_5", nama: "Badak Jawa", icon: "🦏", harga: 60, deskripsi: "Badak bercula satu nan langka" },
+            { id: "stk_6", nama: "Komodo King", icon: "👑", harga: 80, deskripsi: "Raja legenda Nusa Tenggara" }
+        ];
+
+        let appState = {
+            childName: "",
+            stars: 0,
+            streak: 1,
+            lastCheckinDate: "",
+            eggTaps: 0,
+            eggHatchedToday: false,
+            unlockedStickers: [],
+            currentQuiz: null
+        };
+
+        let html5QrCode = null;
+        let audioCtx = null;
+
+        window.onload = function() {
+            loadState();
+            checkDailyReset();
+            checkChildName();
+            renderUserState();
+            renderStreakDays();
+            renderStickers();
+            updateEggUI();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrFromUrl = urlParams.get('soal');
+            if (qrFromUrl) {
+                loadQuizById(qrFromUrl);
+            }
+        };
+
+        function saveState() {
+            localStorage.setItem('rimbahitung_app_state', JSON.stringify(appState));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('rimbahitung_app_state');
+            if (saved) {
+                appState = { ...appState, ...JSON.parse(saved) };
+            }
+        }
+
+        function getTodayDateString() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function checkDailyReset() {
+            const todayStr = getTodayDateString();
+            if (appState.lastCheckinDate !== todayStr) {
+                appState.eggTaps = 0;
+                appState.eggHatchedToday = false;
+                saveState();
+            }
+        }
+
+        function checkChildName() {
+            if (!appState.childName || appState.childName.trim() === "") {
+                document.getElementById('name-modal').classList.remove('hidden');
+            } else {
+                document.getElementById('display-child-name').innerText = appState.childName;
+            }
+        }
+
+        function openChangeNameModal() {
+            document.getElementById('input-child-name').value = appState.childName || "";
+            document.getElementById('name-modal').classList.remove('hidden');
+        }
+
+        function saveChildName() {
+            const inputVal = document.getElementById('input-child-name').value.trim();
+            if (!inputVal) {
+                alert("Mohon masukkan nama panggilanmu dulu ya!");
+                return;
+            }
+            appState.childName = inputVal;
+            saveState();
+            document.getElementById('display-child-name').innerText = appState.childName;
+            document.getElementById('name-modal').classList.add('hidden');
+        }
+
+        function renderUserState() {
+            document.getElementById('user-stars').innerText = appState.stars;
+            document.getElementById('user-streak').innerText = appState.streak;
+            document.getElementById('unlocked-count').innerText = appState.unlockedStickers.length;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            ['checkin', 'scan', 'soal', 'video', 'toko'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (btn) {
+                    btn.className = "flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center hover:bg-slate-100 text-slate-600";
+                }
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "flex-1 min-w-[90px] py-2.5 rounded-xl transition text-center bg-jungle-700 text-white font-bold shadow-sm";
+            }
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            if (tabName !== 'scan' && html5QrCode && html5QrCode.isScanning) {
+                stopScanner();
+            }
+        }
+
+        // Fungsi Ganti Video Tutorial Sempoa
+        function changeTutorial(type) {
+            const iframe = document.getElementById('tutorial-iframe');
+            ['tambah', 'kurang', 'kali', 'bagi'].forEach(t => {
+                const btn = document.getElementById(`btn-vid-${t}`);
+                btn.className = "bg-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs shadow transition hover:bg-slate-200";
+            });
+            
+            document.getElementById(`btn-vid-${type}`).className = "bg-emerald-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition";
+
+            // ID Video YouTube Sempoa Terkait
+            if (type === 'tambah') iframe.src = "https://www.youtube-nocookie.com/embed/36Xj43mZg1w";
+            else if (type === 'kurang') iframe.src = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"; // Ganti URL video kurang jika ada
+            else if (type === 'kali') iframe.src = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"; // Ganti URL video kali jika ada
+            else if (type === 'bagi') iframe.src = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"; // Ganti URL video bagi jika ada
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSoundEffect(type) {
+            initAudio();
+            const now = audioCtx.currentTime;
+            if (type === 'correct') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'pop') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+        }
+
+        function playAnimalSound(animal) {
+            initAudio();
+            const now = audioCtx.currentTime;
+            if (animal === 'cenderawasih') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1800, now);
+                osc.frequency.exponentialRampToValueAtTime(3200, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (animal === 'tarsius') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(3500, now);
+                osc.frequency.linearRampToValueAtTime(4200, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (animal === 'komodo') {
+                const bufferSize = audioCtx.sampleRate * 0.4;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800, now);
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+                noise.stop(now + 0.4);
+            }
+        }
+
+        function startScanner() {
+            initAudio();
+            document.getElementById('scanner-placeholder').classList.add('hidden');
+            document.getElementById('btn-start-scanner').classList.add('hidden');
+            document.getElementById('btn-stop-scanner').classList.remove('hidden');
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    playSoundEffect('correct');
+                    stopScanner();
+                    let quizId = decodedText;
+                    try {
+                        const urlObj = new URL(decodedText);
+                        const paramSoal = urlObj.searchParams.get('soal');
+                        if (paramSoal) quizId = paramSoal;
+                    } catch (e) {}
+                    loadQuizById(quizId);
+                },
+                (errorMessage) => {}
+            ).catch(err => {
+                alert("Gagal mengakses kamera: " + err);
+                stopScanner();
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scanner-placeholder').classList.remove('hidden');
+                    document.getElementById('btn-start-scanner').classList.remove('hidden');
+                    document.getElementById('btn-stop-scanner').classList.add('hidden');
+                });
+            }
+        }
+
+        function loadQuizById(qrId) {
+            const foundQuiz = BANK_SOAL.find(q => q.qr_code_id === qrId);
+            if (!foundQuiz) {
+                alert("QR Code tidak dikenali dalam Bank Soal Satwa Nusantara!");
+                return;
+            }
+            appState.currentQuiz = foundQuiz;
+            renderQuiz(foundQuiz);
+            switchTab('soal');
+            setTimeout(() => {
+                playAnimalSound(foundQuiz.animal);
+            }, 300);
+        }
+
+        function renderQuiz(quiz) {
+            document.getElementById('no-quiz-msg').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-level-badge').innerText = `Level ${quiz.level}`;
+            document.getElementById('quiz-title').innerText = quiz.judul;
+            document.getElementById('quiz-question').innerText = quiz.soal;
+            document.getElementById('quiz-visual').innerText = quiz.visual;
+            document.getElementById('animal-sound-label').innerText = `Dengar Suara ${quiz.animal.toUpperCase()}`;
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.className = "hidden p-4 rounded-2xl text-center space-y-2";
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            quiz.pilihan.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white hover:bg-emerald-100 text-slate-800 font-bold p-4 rounded-2xl border-2 border-emerald-200 shadow-sm transition text-center hover:scale-105 active:scale-95";
+                btn.innerHTML = `<span class="text-lg">${opt.id}. ${opt.teks}</span>`;
+                btn.onclick = () => checkAnswer(opt.id, quiz);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function playCurrentAnimalSound() {
+            if (appState.currentQuiz) {
+                playAnimalSound(appState.currentQuiz.animal);
+            }
+        }
+
+        function checkAnswer(selectedOptionId, quiz) {
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackExp = document.getElementById('feedback-explanation');
+            feedbackEl.classList.remove('hidden');
+
+            if (selectedOptionId === quiz.jawaban_benar) {
+                playSoundEffect('correct');
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+                feedbackEl.className = "p-4 rounded-2xl text-center space-y-1 bg-emerald-100 text-emerald-900 border border-emerald-300";
+                feedbackText.innerText = `🎉 BENAR, ${appState.childName}! +${quiz.bintang} ⭐`;
+                feedbackExp.innerText = quiz.penjelasan;
+                appState.stars += quiz.bintang;
+                saveState();
+                renderUserState();
+            } else {
+                playSoundEffect('wrong');
+                feedbackEl.className = "p-4 rounded-2xl text-center space-y-1 bg-rose-100 text-rose-900 border border-rose-300";
+                feedbackText.innerText = `❌ Ups, Belum Tepat ${appState.childName}!`;
+                feedbackExp.innerText = "Perhatikan kembali gambar dan hitung pelan-pelan ya!";
+            }
+        }
+
+        function tapEgg() {
+            const todayStr = getTodayDateString();
+            if (appState.eggHatchedToday || (appState.lastCheckinDate === todayStr && appState.eggHatchedToday)) {
+                alert(`Telur hari ini sudah menetas, ${appState.childName}! Kembali lagi besok ya! 🦜`);
+                return;
+            }
+            playSoundEffect('pop');
+            appState.eggTaps += 1;
+            const eggEl = document.getElementById('egg-element');
+            eggEl.classList.remove('animate-wobble');
+            void eggEl.offsetWidth;
+            eggEl.classList.add('animate-wobble');
+
+            if (appState.eggTaps >= 5) {
+                appState.eggHatchedToday = true;
+                appState.lastCheckinDate = todayStr;
+                eggEl.innerText = "🦜";
+                playSoundEffect('correct');
+                playAnimalSound('cenderawasih');
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            updateEggUI();
+            saveState();
+        }
+
+        function updateEggUI() {
+            document.getElementById('egg-tap-count').innerText = Math.min(appState.eggTaps, 5);
+            const msg = document.getElementById('checkin-status-msg');
+            const claimBtn = document.getElementById('btn-claim-egg');
+            const todayStr = getTodayDateString();
+            const alreadyDone = appState.eggHatchedToday || (appState.lastCheckinDate === todayStr && appState.eggTaps >= 5);
+
+            if (alreadyDone) {
+                document.getElementById('egg-element').innerText = "🦜";
+                msg.innerText = `✨ Hebat ${appState.childName}! Telur hari ini sudah menetas!`;
+                claimBtn.classList.remove('hidden');
+            } else {
+                msg.innerText = `Ketuk telur ${5 - appState.eggTaps}x lagi untuk menetas!`;
+                claimBtn.classList.add('hidden');
+            }
+        }
+
+        function claimDailyReward() {
+            playSoundEffect('correct');
+            appState.stars += 20;
+            appState.streak += 1;
+            appState.lastCheckinDate = getTodayDateString();
+            saveState();
+            renderUserState();
+            renderStreakDays();
+            updateEggUI();
+            alert(`Selamat ${appState.childName}! Kamu klaim +20 Bintang ⭐ & Streak Bertambah!`);
+        }
+
+        function renderStreakDays() {
+            const container = document.getElementById('streak-days-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= 7; i++) {
+                const dayBox = document.createElement('div');
+                const isCheck = i <= (appState.streak % 7 || 7);
+                dayBox.className = `p-2 rounded-2xl border text-xs flex flex-col items-center gap-1 ${
+                    isCheck ? 'bg-amber-100 border-amber-300 text-amber-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-400'
+                }`;
+                dayBox.innerHTML = `<span>Hari ${i}</span><span class="text-base">${isCheck ? '🌟' : '🔒'}</span>`;
+                container.appendChild(dayBox);
+            }
+        }
+
+        function renderStickers() {
+            const grid = document.getElementById('sticker-grid');
+            grid.innerHTML = '';
+            DATABASE_STIKER.forEach(stk => {
+                const isUnlocked = appState.unlockedStickers.includes(stk.id);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border-2 text-center flex flex-col items-center justify-between space-y-2 transition ${
+                    isUnlocked ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200'
+                }`;
+                card.innerHTML = `
+                    <div class="text-5xl my-1 ${isUnlocked ? '' : 'filter grayscale opacity-50'}">${stk.icon}</div>
+                    <div>
+                        <h5 class="font-bold text-sm text-slate-800">${stk.nama}</h5>
+                        <p class="text-[10px] text-slate-500">${stk.deskripsi}</p>
+                    </div>
+                    ${
+                        isUnlocked 
+                        ? `<span class="text-xs bg-emerald-200 text-emerald-800 font-bold px-3 py-1 rounded-full">Terkoleksi</span>`
+                        : `<button onclick="buySticker('${stk.id}', ${stk.harga})" class="w-full bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs py-1.5 rounded-xl shadow">Beli ${stk.harga} ⭐</button>`
+                    }
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function buySticker(id, harga) {
+            if (appState.stars < harga) {
+                playSoundEffect('wrong');
+                alert(`Bintangmu kurang, ${appState.childName}! Kumpulkan lebih banyak dari kuis ya!`);
+                return;
+            }
+            playSoundEffect('correct');
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.8 } });
+            appState.stars -= harga;
+            appState.unlockedStickers.push(id);
+            saveState();
+            renderUserState();
+            renderStickers();
+        }
+    </script>
+</body>
+</html>
